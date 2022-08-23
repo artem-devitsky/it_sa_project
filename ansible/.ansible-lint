@@ -1,6 +1,0 @@
-warn_list:
-  - deprecated-local-action  # Do not use 'local_action', use 'delegate_to: localhost'
-  - experimental  # all rules tagged as experimental
-skip_list:
-  - no-changed-when  # Commands should not change things if nothing needs doing
-  - package-latest  # Package installs should not use latest

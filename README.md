@@ -1,32 +1,37 @@
-# it-sa-project-private
+# Final project report
+- Group num: md-sa2-20-22
+- Student: Artsiom Dziavitski
+- Date: 2022/07/25
 
-## bash_history
-```bash
-pip install requests google-auth
-openssl genrsa -out master-it-sa.key 4096
-openssl req -x509 -new -key master-it-sa.key -out master-it-sa.pem -days 365
-ansible-galaxy collection install google.cloud
-ansible-galaxy collection install community.general
-ansible-galaxy collection install ansible.utils
-ansible-galaxy collection install ansible.posix
-pip install netaddr
-```
-https://github.com/nagaraj1171/WordPress-CI-CD-K8/blob/master/Jenkinsfile
+## Project descriprtion
+Deployment of WordPress with all necessary infrastructure in Google Cloud like network, nodes, K8s, Jenkins, etc.
 
-```bash
-jsonpath="{.data.jenkins-admin-password}"
-secret=$(kubectl get secret -n jenkins jenkins -o jsonpath=$jsonpath)
-echo $(echo $secret | base64 --decode)
-```
+### Nodes:
+- 3x CentOS 8 Stream with K8s
+- 1x CentOS 8 Stream with NFS server
 
-https://devopscube.com/jenkins-build-agents-kubernetes/
+### Application:
+- WordPress ver. 6.0.1/6.0.1
+- MariaDB ver. 10.6.4
 
-```bash
-install:
-container-diff @ google #shit
-kubeval
-```
-sudo git clone https://github.com/moul/docker-diff /opt/docker-diff 
-sudo ln -s /opt/docker-diff/docker-diff /usr/local/bin
+### CI/CD:
+- Jenkins
+- GitHub Repository (infrastructure and app)
+- DockerHub (image storage)
+- Kubernetes (archestration)
 
-test webhook string
+### Jenkins plugins
+- GiHub plugin
+- Kubernetes 
+- SSH Agent
+- Multibranch Scan Webhook Trigger
+
+
+### CI/CD description:
+Admin clone GHub repo with all necesary manifests for infrastructure and run ansible playbook to deploy nodes, k8s cluster, network and firewall rules in GCP. After that need manually deploy Jenkins (fix this later) and setup necessery plugins, multibranch pipeline with webhooks from infrastructure repo and WordPress repo. First time run pipeline to start image building and deployment of WordPress and MariaDB. If all done right pipeline would start after any commit.
+Repos:
+- [Infrastructure repo](https://github.com/artem-devitsky/it-sa-project-private) (private right now)
+- [Wordpress repo](https://github.com/artem-devitsky/project-WordPress)
+- [WordPress](http://itsawordpress.mooo.com/?p=1)
+
+![Project Scheme](project-sa-it-scheme.png)
