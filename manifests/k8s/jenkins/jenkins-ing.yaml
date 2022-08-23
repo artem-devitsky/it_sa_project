@@ -1,0 +1,32 @@
+# Please edit the object below. Lines beginning with a '#' will be ignored,
+# and an empty file will abort the edit. If an error occurs while saving this file will be
+# reopened with the relevant failures.
+#
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/server-alias: jenkis.sa
+  labels:
+    app.kubernetes.io/instance: jenkins
+  name: ingress-jenkins
+  namespace: jenkins
+spec:
+  rules:
+  - host: jenkins.sa
+    http:
+      paths:
+      - backend:
+          service:
+            name: jenkins
+            port:
+              number: 8080
+        path: /
+        pathType: Prefix
+status:
+  loadBalancer:
+    ingress:
+    - ip: 10.132.0.7
+    - ip: 10.132.0.11
+    - ip: 10.132.0.12

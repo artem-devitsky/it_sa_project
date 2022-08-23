@@ -1,0 +1,7 @@
+FROM mariadb:10.6.4-focal as wp-db
+ENV MYSQL_ROOT_PASSWORD=somewordpress
+ENV MYSQL_DATABASE=wordpress
+ENV MYSQL_USER=wordpress
+ENV MYSQL_PASSWORD=wordpress    
+EXPOSE 3306
+EXPOSE 33060  

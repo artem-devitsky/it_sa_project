@@ -1,0 +1,157 @@
+- hosts: all
+  strategy: free
+  gather_facts: false
+  become: true
+
+
+  handlers:
+   - name: restart ssh
+     ansible.builtin.systemd:
+      name: sshd
+      state: restarted
+
+  tasks:
+   - name: Disable SWAP
+     ansible.builtin.command: swapoff -a
+     ignore_errors: true
+
+   - name: Disable SWAP in fstab
+     ansible.builtin.lineinfile:
+      path: /etc/fstab
+      regexp: 'swap'
+      state: absent
+
+   - name: Enable Root Login
+     ansible.builtin.lineinfile:
+      dest: /etc/ssh/sshd_config
+      regexp: '^PermitRootLogin'
+      line: "PermitRootLogin yes"
+      state: present
+      backup: true
+     become: true
+     notify:
+      - restart ssh
+
+   - name: Ensure group "ansible" exists
+     ansible.builtin.group:
+      name: ansible
+      state: present
+
+   - name: "Create user accounts"
+     ansible.builtin.user:
+      name: "ansible"
+      groups: "ansible"
+      state: "present"
+      shell: /bin/bash
+
+   - name: "Add authorized keys"
+     ansible.posix.authorized_key:
+      user: "ansible"
+      key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+   - name: "Allow admin users to sudo without a password"
+     ansible.builtin.lineinfile:
+      dest: "/etc/sudoers"
+      state: "present"
+      regexp: "^%root"
+      insertafter: "^#root"
+      line: "ansible ALL=(ALL) NOPASSWD: ALL"
+
+   - name: Disable firewall service for labs
+     ansible.builtin.service:
+      name: firewalld
+      state: stopped
+      enabled: false
+
+   - name: Disable SELinux
+     ansible.builtin.command: setenforce 0
+     ignore_errors: true
+
+   - name: Disable SELinux on reboot
+     ansible.posix.selinux:
+      state: disabled
+
+   - name: Enable kernel module br_netfilter
+     ansible.builtin.command: modprobe br_netfilter
+     ignore_errors: true
+
+
+   - name: Ensure net.bridge.bridge-nf-call-ip6tables is set to 1
+     ansible.posix.sysctl:
+      name: net.bridge.bridge-nf-call-ip6tables
+      value: 1
+      state: present
+
+   - name: Ensure net.bridge.bridge-nf-call-iptables is set to 1
+     ansible.posix.sysctl:
+      name: net.bridge.bridge-nf-call-iptables
+      value: 1
+      state: present
+
+   - name: Add Kubernetes YUM repository
+     ansible.builtin.yum_repository:
+      name: Kubernetes
+      description: Kubernetes YUM repository
+      baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+      gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+      gpgcheck: true
+
+   - name: Add EPEL YUM repository
+     ansible.builtin.yum:
+      name: epel-release.noarch
+      state: latest
+
+   - name: Add Docker YUM repository
+     ansible.builtin.get_url:
+      url: https://download.docker.com/linux/centos/docker-ce.repo
+      dest: /etc/yum.repos.d/Docker.repo
+      mode: 660
+
+   - name: Update all packages
+     ansible.builtin.yum:
+      state: latest
+      name: "*"
+
+   - name: Install Docker
+     ansible.builtin.yum:
+      name: docker-ce
+      state: present
+      update_cache: true
+
+   - name: Start Docker
+     ansible.builtin.service:
+      name: docker
+      state: started
+      enabled: true
+
+   - name: Install kubelet
+     ansible.builtin.yum:
+      name: kubelet
+      state: present
+      update_cache: true
+
+   - name: Install kubeadm
+     ansible.builtin.yum:
+      name: kubeadm
+      state: present
+
+   - name: Start kubelet
+     ansible.builtin.service:
+      name: kubelet
+      enabled: true
+      state: started
+
+- hosts: masters
+  become: true
+  tasks:
+   - name: Install kubectl
+     ansible.builtin.yum:
+      name: kubectl
+      state: present
+      allow_downgrade: true
+
+- hosts: all
+  become: true
+  tasks:
+   - name: Reboot ALL machines
+     ansible.builtin.reboot:

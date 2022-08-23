@@ -1,0 +1,5 @@
+collections:
+  - google.cloud
+  - community.general
+  - ansible.utils
+  - ansible.posix
